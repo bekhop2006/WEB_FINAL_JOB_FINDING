@@ -14,10 +14,12 @@ WEB_FINAL_JOB_FINDING/
 ## Быстрый старт
 
 ```bash
-npm install           # зависимости корня
-npm run install:all   # зависимости backend и frontend (первый раз)
-npm run dev           # запустить backend + frontend
+npm install              # зависимости корня (concurrently)
+npm run install:all      # обязательно: зависимости backend и frontend
+npm run dev              # запустить backend + frontend
 ```
+
+**Важно:** После переноса проекта или клонирования сначала выполните `npm run install:all`, чтобы установить зависимости в `backend/` и `frontend/`.
 
 Запускает **backend** (порт 3000) и **frontend** (порт 8080) одновременно.
 
@@ -40,3 +42,22 @@ npm install && npm run dev
 ```
 
 См. [backend/README.md](backend/README.md) и [frontend/README.md](frontend/README.md).
+
+## Регистрация не работает?
+
+Если при регистрации появляется ошибка `Cannot find module '../encodings'` или подобная:
+
+1. **Остановите все процессы Node** (старый сервер может занимать порт 3000):
+   ```bash
+   pkill -f "node.*server"   # или закройте терминал с сервером
+   ```
+
+2. **Запустите проект заново** из корня:
+   ```bash
+   npm run dev
+   ```
+
+3. Либо запускайте backend **только из папки backend**:
+   ```bash
+   cd backend && npm start
+   ```

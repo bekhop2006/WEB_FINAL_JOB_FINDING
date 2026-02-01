@@ -1,7 +1,7 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
-const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./app/config/swagger");
 const db = require("./app/models");
 
@@ -21,29 +21,55 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/swagger.json", (req, res) => res.json(swaggerSpec));
-app.get("/doc", (req, res) => res.redirect(302, "/swagger"));
-app.get("/docs", (req, res) => res.redirect(302, "/swagger"));
-app.get("/api-docs", (req, res) => res.redirect(302, "/swagger"));
-app.get("/api-docs/", (req, res) => res.redirect(302, "/swagger"));
 
 const PORT = process.env.PORT || 3000;
 
-app.use(
-  "/swagger",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, {
-    swaggerOptions: {
-      persistAuthorization: true,
-      docExpansion: "list",
-    },
-  })
-);
+// Swagger UI - serve HTML that loads assets from CDN (avoids path/MIME issues)
+const swaggerHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>JobFinder API</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css">
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = () => {
+      SwaggerUIBundle({
+        url: "/swagger.json",
+        dom_id: "#swagger-ui",
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "StandaloneLayout",
+        persistAuthorization: true,
+        docExpansion: "list"
+      });
+    };
+  </script>
+</body>
+</html>
+`;
+
+app.get("/api-docs", (req, res) => res.type("html").send(swaggerHtml));
+app.get("/api-docs/", (req, res) => res.type("html").send(swaggerHtml));
+
+// Redirects for alternative URLs
+app.get("/doc", (req, res) => res.redirect(302, "/api-docs"));
+app.get("/docs", (req, res) => res.redirect(302, "/api-docs"));
+app.get("/swagger", (req, res) => res.redirect(302, "/api-docs"));
+app.get("/swagger/", (req, res) => res.redirect(302, "/api-docs"));
 
 app.get("/", (req, res) => {
   const baseUrl = `http://localhost:${PORT}`;
   res.json({
     message: "Welcome to JobFinder API.",
-    swagger: `${baseUrl}/swagger`,
+    swagger: `${baseUrl}/api-docs`,
     endpoints: {
       auth: "/api/auth/register, /api/auth/login",
       users: "/api/users/profile",
