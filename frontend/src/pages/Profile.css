@@ -1,0 +1,19 @@
+.profile-page h1 {
+  margin-bottom: 1.5rem;
+  font-size: 1.75rem;
+}
+
+.profile-page h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.profile-info p {
+  margin-bottom: 0.5rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
