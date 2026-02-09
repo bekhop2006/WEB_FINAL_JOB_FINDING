@@ -108,7 +108,7 @@ Backend отдаёт API и собранный frontend с одного URL.
 
 ### Deployed URL
 
-> Add your deployed API URL here after deployment, e.g. `https://jobfinder-api.onrender.com`
+**Live app:** [https://web-final-job-finding.onrender.com/](https://web-final-job-finding.onrender.com/)
 
 ## Separate Run
 
@@ -121,6 +121,3 @@ cd backend && npm install && npm start
 ```bash
 cd frontend && npm install && npm run dev
 ```
-
-
-https://web-final-job-finding.onrender.com/
