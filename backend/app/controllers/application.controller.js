@@ -1,8 +1,10 @@
 const db = require("../models");
 const Application = db.Application;
 const Job = db.Job;
+const User = db.User;
+const emailService = require("../services/email.service");
 
-exports.create = async (req, res) => {
+exports.create = async (req, res, next) => {
   try {
     const { jobId, coverLetter } = req.body;
 
@@ -36,15 +38,15 @@ exports.create = async (req, res) => {
 
     res.status(201).json(populated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.findAll = async (req, res) => {
+exports.findAll = async (req, res, next) => {
   try {
     let filter = {};
 
-    if (req.user.role === "job_seeker") {
+    if (req.user.role === "job_seeker" || req.user.role === "premium_user") {
       filter.applicant = req.userId;
     } else if (req.user.role === "employer") {
       const myJobs = await Job.find({ employer: req.userId }).select("_id");
@@ -62,11 +64,11 @@ exports.findAll = async (req, res) => {
 
     res.json(applications);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.findOne = async (req, res) => {
+exports.findOne = async (req, res, next) => {
   try {
     const application = await Application.findById(req.params.id)
       .populate("job")
@@ -86,11 +88,11 @@ exports.findOne = async (req, res) => {
 
     res.json(application);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.updateStatus = async (req, res) => {
+exports.updateStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
     const validStatuses = ["pending", "reviewed", "accepted", "rejected"];
@@ -107,12 +109,25 @@ exports.updateStatus = async (req, res) => {
     }
 
     const job = await Job.findById(application.job._id);
-    if (job.employer.toString() !== req.userId && req.user.role !== "admin") {
+    const isEmployer = job.employer.toString() === req.userId;
+    const isAdmin = req.user.role === "admin";
+    const isModerator = req.user.role === "moderator";
+
+    if (!isEmployer && !isAdmin && !isModerator) {
       return res.status(403).json({ message: "Not authorized to update this application." });
     }
 
     application.status = status;
     await application.save();
+
+    // Send email notification to applicant (async, non-blocking)
+    const applicant = await User.findById(application.applicant).select("email fullName username");
+    if (applicant && applicant.email) {
+      const jobTitle = application.job?.title || job?.title || "Job";
+      emailService
+        .sendApplicationStatusEmail(applicant.email, applicant.fullName || applicant.username, jobTitle, status)
+        .catch(() => {});
+    }
 
     const populated = await Application.findById(application._id)
       .populate("job")
@@ -120,11 +135,11 @@ exports.updateStatus = async (req, res) => {
 
     res.json(populated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.delete = async (req, res) => {
+exports.delete = async (req, res, next) => {
   try {
     const application = await Application.findById(req.params.id);
     if (!application) {
@@ -138,6 +153,6 @@ exports.delete = async (req, res) => {
     await Application.findByIdAndDelete(req.params.id);
     res.json({ message: "Application withdrawn successfully." });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };

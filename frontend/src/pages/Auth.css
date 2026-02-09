@@ -19,3 +19,10 @@
 .auth-footer a {
   font-weight: 500;
 }
+
+.file-name {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text-muted, #666);
+}

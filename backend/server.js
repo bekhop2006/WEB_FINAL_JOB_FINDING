@@ -79,10 +79,24 @@ app.get("/", (req, res) => {
   });
 });
 
+// Serve uploaded files (e.g. resumes)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
+
+// 404 - pass to error handler
+app.use((req, res, next) => {
+  const err = new Error("Endpoint not found.");
+  err.statusCode = 404;
+  next(err);
+});
+
+// Global error handler (must be last)
+const errorHandler = require("./app/middlewares/errorHandler");
+app.use(errorHandler);
 
 db.mongoose
   .connect(db.url)

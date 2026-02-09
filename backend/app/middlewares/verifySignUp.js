@@ -20,7 +20,7 @@ const checkDuplicateUsernameOrEmail = async (req, res, next) => {
 };
 
 const checkRoleExisted = (req, res, next) => {
-  const validRoles = ["job_seeker", "employer", "admin"];
+  const validRoles = ["job_seeker", "employer", "admin", "premium_user", "moderator"];
   if (req.body.role && !validRoles.includes(req.body.role)) {
     return res.status(400).json({
       message: `Invalid role. Must be one of: ${validRoles.join(", ")}`,

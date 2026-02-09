@@ -22,16 +22,18 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["job_seeker", "employer", "admin"],
+      enum: ["job_seeker", "employer", "admin", "premium_user", "moderator"],
       default: "job_seeker",
     },
     fullName: {
       type: String,
       trim: true,
+      required: true,
     },
     phone: {
       type: String,
       trim: true,
+      required: true,
     },
     resume: {
       type: String,

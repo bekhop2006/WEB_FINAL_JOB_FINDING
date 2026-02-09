@@ -35,9 +35,20 @@ const isEmployer = (req, res, next) => {
   next();
 };
 
+/**
+ * Employer can manage own jobs; Moderator can delete any job (moderation).
+ */
+const isEmployerOrModerator = (req, res, next) => {
+  const allowed = ["employer", "admin", "moderator"];
+  if (!allowed.includes(req.user.role)) {
+    return res.status(403).json({ message: "Require Employer, Moderator, or Admin role!" });
+  }
+  next();
+};
+
 const isJobSeeker = (req, res, next) => {
-  if (req.user.role !== "job_seeker" && req.user.role !== "admin") {
-    return res.status(403).json({ message: "Require Job Seeker or Admin role!" });
+  if (!["job_seeker", "premium_user", "admin"].includes(req.user.role)) {
+    return res.status(403).json({ message: "Require Job Seeker, Premium User, or Admin role!" });
   }
   next();
 };
@@ -49,9 +60,22 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
+/**
+ * Moderator: can delete jobs (moderation), manage application status.
+ * premium_user: treated like job_seeker for applications.
+ */
+const isModerator = (req, res, next) => {
+  if (req.user.role !== "moderator" && req.user.role !== "admin") {
+    return res.status(403).json({ message: "Require Moderator or Admin role!" });
+  }
+  next();
+};
+
 module.exports = {
   verifyToken,
   isEmployer,
+  isEmployerOrModerator,
   isJobSeeker,
   isAdmin,
+  isModerator,
 };

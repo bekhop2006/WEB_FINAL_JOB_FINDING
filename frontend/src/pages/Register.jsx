@@ -18,8 +18,10 @@ export default function Register() {
     password: '',
     role: 'job_seeker',
     fullName: '',
+    phone: '',
     companyName: '',
   })
+  const [resumeFile, setResumeFile] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -28,7 +30,7 @@ export default function Register() {
     setError('')
     setLoading(true)
     try {
-      await authApi.register(form)
+      await authApi.register(form, resumeFile)
       const data = await authApi.login({ username: form.username, password: form.password })
       const userData = {
         id: data.id || data._id,
@@ -46,6 +48,7 @@ export default function Register() {
         'Username is already in use!': 'Логин уже занят',
         'Email is already in use!': 'Email уже используется',
         'Invalid role. Must be one of: job_seeker, employer, admin': 'Недопустимая роль',
+        'Only PDF files are allowed.': 'Допускаются только файлы PDF.',
       }
       setError(translated[msg] || msg)
     } finally {
@@ -88,28 +91,53 @@ export default function Register() {
             />
           </div>
           <div className="form-group">
-            <label>Роль</label>
-            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+            <label>Роль *</label>
+            <select
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
+              required
+            >
               {ROLES.map((r) => (
                 <option key={r.value} value={r.value}>{r.label}</option>
               ))}
             </select>
           </div>
           <div className="form-group">
-            <label>ФИО</label>
+            <label>ФИО *</label>
             <input
               type="text"
               value={form.fullName}
               onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+              required
             />
+          </div>
+          <div className="form-group">
+            <label>Телефон *</label>
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              placeholder="+7 777 123 45 67"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Резюме (PDF)</label>
+            <input
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+            />
+            {resumeFile && <span className="file-name">{resumeFile.name}</span>}
           </div>
           {form.role === 'employer' && (
             <div className="form-group">
-              <label>Компания</label>
+              <label>Компания *</label>
               <input
                 type="text"
                 value={form.companyName}
                 onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                required
               />
             </div>
           )}

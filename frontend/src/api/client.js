@@ -12,11 +12,16 @@ function getHeaders(includeAuth = true) {
 }
 
 export async function api(endpoint, options = {}) {
-  const { method = 'GET', body, auth = true } = options
+  const { method = 'GET', body, auth = true, formData: isFormData = false } = options
+  const headers = isFormData ? {} : getHeaders(auth)
+  if (!isFormData && auth) {
+    const token = localStorage.getItem('jobfinder_token')
+    if (token) headers['Authorization'] = `Bearer ${token}`
+  }
   const res = await fetch(`${API_BASE}${endpoint}`, {
     method,
-    headers: getHeaders(auth),
-    body: body ? JSON.stringify(body) : undefined,
+    headers: isFormData ? (headers.Authorization ? { Authorization: headers.Authorization } : {}) : headers,
+    body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
@@ -33,7 +38,26 @@ export async function api(endpoint, options = {}) {
 
 // Auth
 export const authApi = {
-  register: (data) => api('/auth/register', { method: 'POST', body: data, auth: false }),
+  register: (data, resumeFile = null) => {
+    if (resumeFile) {
+      const formData = new FormData()
+      formData.append('username', data.username)
+      formData.append('email', data.email)
+      formData.append('password', data.password)
+      formData.append('role', data.role)
+      formData.append('fullName', data.fullName)
+      formData.append('phone', data.phone)
+      if (data.companyName) formData.append('companyName', data.companyName)
+      formData.append('resume', resumeFile)
+      return api('/auth/register', {
+        method: 'POST',
+        body: formData,
+        auth: false,
+        formData: true,
+      })
+    }
+    return api('/auth/register', { method: 'POST', body: data, auth: false })
+  },
   login: (data) => api('/auth/login', { method: 'POST', body: data, auth: false }),
 }
 

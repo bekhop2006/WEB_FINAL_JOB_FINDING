@@ -1,0 +1,15 @@
+# Render Blueprint - optional, for one-click deploy
+# Create Web Service manually and add env vars if not using this
+services:
+  - type: web
+    name: jobfinder-api
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # Add these in Render Dashboard:
+      # MONGODB_URI, JWT_SECRET, CORS_ORIGIN, SMTP_*

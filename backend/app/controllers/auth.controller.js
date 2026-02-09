@@ -3,9 +3,15 @@ const db = require("../models");
 const User = db.User;
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const emailService = require("../services/email.service");
 
-exports.signup = async (req, res) => {
+exports.signup = async (req, res, next) => {
   try {
+    let resumePath = "";
+    if (req.file && req.file.filename) {
+      resumePath = "/uploads/resumes/" + req.file.filename;
+    }
+
     const user = new User({
       username: req.body.username,
       email: req.body.email,
@@ -13,10 +19,14 @@ exports.signup = async (req, res) => {
       role: req.body.role || "job_seeker",
       fullName: req.body.fullName,
       phone: req.body.phone,
-      companyName: req.body.companyName,
+      companyName: req.body.companyName || "",
+      resume: resumePath || undefined,
     });
 
     await user.save();
+
+    // Send welcome email (async, non-blocking; fails silently if SMTP not configured)
+    emailService.sendWelcomeEmail(user.email, user.username).catch(() => {});
 
     res.status(201).json({
       message: "User was registered successfully!",
@@ -28,11 +38,11 @@ exports.signup = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.signin = async (req, res) => {
+exports.signin = async (req, res, next) => {
   try {
     const user = await User.findOne({ username: req.body.username });
 
@@ -64,6 +74,6 @@ exports.signin = async (req, res) => {
       accessToken: token,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };

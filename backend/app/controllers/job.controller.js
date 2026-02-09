@@ -2,7 +2,7 @@ const db = require("../models");
 const Job = db.Job;
 const Application = db.Application;
 
-exports.create = async (req, res) => {
+exports.create = async (req, res, next) => {
   try {
     const job = new Job({
       ...req.body,
@@ -12,11 +12,11 @@ exports.create = async (req, res) => {
     const populated = await Job.findById(job._id).populate("employer", "username fullName companyName");
     res.status(201).json(populated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.findAll = async (req, res) => {
+exports.findAll = async (req, res, next) => {
   try {
     const { title, location, company, category, jobType, status } = req.query;
     const filter = {};
@@ -34,11 +34,11 @@ exports.findAll = async (req, res) => {
 
     res.json(jobs);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.findOne = async (req, res) => {
+exports.findOne = async (req, res, next) => {
   try {
     const job = await Job.findById(req.params.id).populate(
       "employer",
@@ -49,11 +49,11 @@ exports.findOne = async (req, res) => {
     }
     res.json(job);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.update = async (req, res) => {
+exports.update = async (req, res, next) => {
   try {
     const job = await Job.findById(req.params.id);
     if (!job) {
@@ -75,18 +75,22 @@ exports.update = async (req, res) => {
 
     res.json(updated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.delete = async (req, res) => {
+exports.delete = async (req, res, next) => {
   try {
     const job = await Job.findById(req.params.id);
     if (!job) {
       return res.status(404).json({ message: "Job not found." });
     }
 
-    if (job.employer.toString() !== req.userId && req.user.role !== "admin") {
+    const isOwner = job.employer.toString() === req.userId;
+    const isAdmin = req.user.role === "admin";
+    const isModerator = req.user.role === "moderator";
+
+    if (!isOwner && !isAdmin && !isModerator) {
       return res.status(403).json({ message: "Not authorized to delete this job." });
     }
 
@@ -95,11 +99,11 @@ exports.delete = async (req, res) => {
 
     res.json({ message: "Job deleted successfully." });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-exports.findMyJobs = async (req, res) => {
+exports.findMyJobs = async (req, res, next) => {
   try {
     const jobs = await Job.find({ employer: req.userId })
       .populate("employer", "username fullName companyName")
@@ -107,6 +111,6 @@ exports.findMyJobs = async (req, res) => {
 
     res.json(jobs);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
