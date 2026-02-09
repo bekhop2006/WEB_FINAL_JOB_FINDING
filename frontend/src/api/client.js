@@ -1,4 +1,8 @@
-const API_BASE = '/api'
+// VITE_API_URL = backend base, e.g. https://jobfinder-api.onrender.com (without /api)
+const BACKEND_BASE = import.meta.env.VITE_API_URL || ''
+const API_BASE = BACKEND_BASE ? `${BACKEND_BASE}/api` : '/api'
+export const getUploadUrl = (path) =>
+  path ? (path.startsWith('http') ? path : (BACKEND_BASE || '') + path) : ''
 
 function getHeaders(includeAuth = true) {
   const headers = {

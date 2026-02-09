@@ -1,11 +1,13 @@
-# Render Blueprint - optional, for one-click deploy
-# Create Web Service manually and add env vars if not using this
+# Render — один сервис: backend + frontend
+# Root Directory: оставьте пустым (repo root)
+# Build: собирает frontend и backend
+# Start: запускает backend, который отдаёт API + собранный frontend
 services:
   - type: web
-    name: jobfinder-api
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: npm start
+    name: jobfinder
+    # rootDir: пусто = корень репозитория 
+    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
+    startCommand: cd backend && node server.js
     envVars:
       - key: NODE_ENV
         value: production

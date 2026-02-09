@@ -65,17 +65,15 @@ app.get("/docs", (req, res) => res.redirect(302, "/api-docs"));
 app.get("/swagger", (req, res) => res.redirect(302, "/api-docs"));
 app.get("/swagger/", (req, res) => res.redirect(302, "/api-docs"));
 
-app.get("/", (req, res) => {
-  const baseUrl = `http://localhost:${PORT}`;
+// Root — API info when no frontend build
+app.get("/", (req, res, next) => {
+  const frontendDist = path.join(__dirname, "../frontend/dist");
+  if (require("fs").existsSync(frontendDist)) return next();
+  const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
   res.json({
     message: "Welcome to JobFinder API.",
     swagger: `${baseUrl}/api-docs`,
-    endpoints: {
-      auth: "/api/auth/register, /api/auth/login",
-      users: "/api/users/profile",
-      jobs: "/api/jobs",
-      applications: "/api/applications",
-    },
+    endpoints: { auth: "/api/auth", jobs: "/api/jobs", applications: "/api/applications" },
   });
 });
 
@@ -86,6 +84,13 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
+
+// Frontend SPA (production) — after API routes
+const frontendDist = path.join(__dirname, "../frontend/dist");
+if (require("fs").existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get("*", (req, res) => res.sendFile(path.join(frontendDist, "index.html")));
+}
 
 // 404 - pass to error handler
 app.use((req, res, next) => {

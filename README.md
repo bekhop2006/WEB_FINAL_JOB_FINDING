@@ -82,15 +82,22 @@ Full interactive docs: **http://localhost:3000/swagger/** (or `/api-docs`)
 | /api/applications/:id | GET, DELETE | Get/withdraw application |
 | /api/applications/:id/status | PUT | Update status (employer/moderator) |
 
-## Deployment (Render / Railway)
+## Deployment (Render) — один сервис
 
-### Render
+Backend отдаёт API и собранный frontend с одного URL.
 
-1. Create Web Service, connect GitHub repo
-2. Root directory: `backend` (or set build command to `cd backend && npm install`)
-3. Build: `npm install`
-4. Start: `npm start`
-5. Add env vars: `MONGODB_URI`, `JWT_SECRET`, `PORT`, `CORS_ORIGIN`, `SMTP_*` (optional)
+1. **New** → **Web Service**, подключите репозиторий.
+2. **Root Directory:** оставьте **пустым** (корень репозитория)
+3. **Build Command:** `cd frontend && npm install && npm run build && cd ../backend && npm install`
+4. **Start Command:** `cd backend && node server.js`
+5. **Environment:** `MONGODB_URI`, `JWT_SECRET`, `CORS_ORIGIN` (можно `*` или URL)
+6. Deploy
+
+Готово: по одному URL будут доступны и фронт, и API.
+
+### Альтернатива: два сервиса (Backend + Static Site)
+
+См. предыдущую версию README в git history — Backend как Web Service, Frontend как Static Site с `VITE_API_URL`.
 
 ### Railway
 
@@ -114,3 +121,6 @@ cd backend && npm install && npm start
 ```bash
 cd frontend && npm install && npm run dev
 ```
+
+
+https://web-final-job-finding.onrender.com/
