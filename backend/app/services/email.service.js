@@ -9,7 +9,7 @@ require("dotenv").config({ path: path.join(__dirname, "../../.env") });
  */
 const createTransporter = () => {
   const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT || 587;
+  const port = Number(process.env.SMTP_PORT || 587);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
@@ -17,15 +17,19 @@ const createTransporter = () => {
     return null;
   }
 
-  return nodemailer.createTransport({
+  // SendGrid: use port 587 with STARTTLS, user must be literally "apikey"
+  const options = {
     host,
-    port: Number(port),
+    port,
     secure: port === 465,
-    auth: {
-      user,
-      pass,
-    },
-  });
+    auth: { user, pass },
+  };
+  if (port === 587) {
+    options.secure = false;
+    options.requireTLS = true;
+  }
+
+  return nodemailer.createTransport(options);
 };
 
 /**
@@ -54,6 +58,9 @@ const sendWelcomeEmail = async (email, username) => {
     });
   } catch (err) {
     console.error("Failed to send welcome email:", err.message);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("SMTP error details:", err);
+    }
   }
 };
 
@@ -90,6 +97,9 @@ const sendApplicationStatusEmail = async (applicantEmail, applicantName, jobTitl
     });
   } catch (err) {
     console.error("Failed to send application status email:", err.message);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("SMTP error details:", err);
+    }
   }
 };
 

@@ -56,10 +56,11 @@ WEB_FINAL_JOB_FINDING/
 
 4. **Run MongoDB** (local or use MongoDB Atlas URI in .env)
 
-5. **Start the app:**
+5. **Запуск проекта:**
    ```bash
-   npm run dev   # from project root
+   npm start     # одна команда — backend + frontend
    ```
+   Или: `npm run dev` (то же самое).
 
 - Frontend: http://localhost:8080
 - API: http://localhost:3000
