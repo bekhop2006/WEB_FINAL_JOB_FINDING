@@ -89,7 +89,7 @@ app.use("/api/applications", applicationRoutes);
 const frontendDist = path.join(__dirname, "../frontend/dist");
 if (require("fs").existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
-  app.get("*", (req, res) => res.sendFile(path.join(frontendDist, "index.html")));
+  app.get("/(.*)", (req, res) => res.sendFile(path.join(frontendDist, "index.html")));
 }
 
 // 404 - pass to error handler
