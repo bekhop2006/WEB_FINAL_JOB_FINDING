@@ -1,14 +1,13 @@
-const db = require("../models");
-const User = db.User;
+const User = require("../repositories/user.repository");
 
 const checkDuplicateUsernameOrEmail = async (req, res, next) => {
   try {
-    const userByUsername = await User.findOne({ username: req.body.username });
+    const userByUsername = await User.findByUsername(req.body.username);
     if (userByUsername) {
       return res.status(400).json({ message: "Username is already in use!" });
     }
 
-    const userByEmail = await User.findOne({ email: req.body.email });
+    const userByEmail = await User.findByEmail(req.body.email);
     if (userByEmail) {
       return res.status(400).json({ message: "Email is already in use!" });
     }

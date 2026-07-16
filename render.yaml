@@ -14,4 +14,4 @@ services:
       - key: PORT
         value: 3000
       # Add these in Render Dashboard:
-      # MONGODB_URI, JWT_SECRET, CORS_ORIGIN, SMTP_*
+      # DATABASE_URL, JWT_SECRET, CORS_ORIGIN, SMTP_*

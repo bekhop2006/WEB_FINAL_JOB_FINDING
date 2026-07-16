@@ -28,7 +28,7 @@ JobFinder is a full-stack web application for job seekers and employers. Job see
 
 ```
 WEB_FINAL_JOB_FINDING/
-├── backend/     # Node.js, Express, MongoDB API
+├── backend/     # Node.js, Express, Supabase (PostgreSQL) API
 ├── frontend/    # React application (Vite)
 └── README.md
 ```
@@ -47,14 +47,17 @@ WEB_FINAL_JOB_FINDING/
    npm run install:all   # installs backend + frontend deps
    ```
 
-3. **Configure environment:**
+3. **Create a free Supabase project** and run the SQL schema:
+   - Open Supabase → **SQL Editor**
+   - Paste and run [`backend/app/db/schema.sql`](backend/app/db/schema.sql)
+   - Copy **Database → Connection string (URI)**
+
+4. **Configure environment:**
    ```bash
    cd backend
    cp .env.example .env
-   # Edit .env: MONGODB_URI, JWT_SECRET, SMTP_* (optional for email)
+   # Edit .env: DATABASE_URL, JWT_SECRET, SMTP_* (optional for email)
    ```
-
-4. **Run MongoDB** (local or use MongoDB Atlas URI in .env)
 
 5. **Запуск проекта:**
    ```bash
@@ -90,7 +93,7 @@ Backend отдаёт API и собранный frontend с одного URL.
 2. **Root Directory:** оставьте **пустым** (корень репозитория)
 3. **Build Command:** `cd frontend && npm install && npm run build && cd ../backend && npm install`
 4. **Start Command:** `cd backend && node server.js`
-5. **Environment:** `MONGODB_URI`, `JWT_SECRET`, `CORS_ORIGIN` (можно `*` или URL)
+5. **Environment:** `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` (можно `*` или URL)
 6. Deploy
 
 Готово: по одному URL будут доступны и фронт, и API.
@@ -103,7 +106,7 @@ Backend отдаёт API и собранный frontend с одного URL.
 
 1. New Project → Deploy from GitHub
 2. Set root to `backend/`
-3. Add variables: `MONGODB_URI`, `JWT_SECRET`, etc.
+3. Add variables: `DATABASE_URL`, `JWT_SECRET`, etc.
 4. Railway auto-detects Node.js
 
 ### Deployed URL

@@ -1,10 +1,9 @@
-const db = require("../models");
-const User = db.User;
+const User = require("../repositories/user.repository");
 const bcrypt = require("bcryptjs");
 
 exports.getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.userId).select("-password");
+    const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -17,12 +16,7 @@ exports.getProfile = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
   try {
     const updates = {};
-    const allowedFields = [
-      "fullName",
-      "phone",
-      "resume",
-      "companyName",
-    ];
+    const allowedFields = ["fullName", "phone", "resume", "companyName"];
 
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {
@@ -34,12 +28,7 @@ exports.updateProfile = async (req, res, next) => {
       updates.password = bcrypt.hashSync(req.body.password, 8);
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.userId,
-      { $set: updates },
-      { new: true }
-    ).select("-password");
-
+    const user = await User.updateById(req.userId, updates);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -52,12 +41,12 @@ exports.updateProfile = async (req, res, next) => {
 
 exports.getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
 
-    if (req.user.role !== "admin" && req.userId.toString() !== req.params.id) {
+    if (req.user.role !== "admin" && String(req.userId) !== String(req.params.id)) {
       return res.status(403).json({ message: "Access denied." });
     }
 

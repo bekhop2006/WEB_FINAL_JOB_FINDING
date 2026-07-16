@@ -1,16 +1,13 @@
-const db = require("../models");
-const Job = db.Job;
-const Application = db.Application;
+const Job = require("../repositories/job.repository");
+const Application = require("../repositories/application.repository");
 
 exports.create = async (req, res, next) => {
   try {
-    const job = new Job({
+    const job = await Job.create({
       ...req.body,
-      employer: req.userId,
+      employerId: req.userId,
     });
-    await job.save();
-    const populated = await Job.findById(job._id).populate("employer", "username fullName companyName");
-    res.status(201).json(populated);
+    res.status(201).json(job);
   } catch (err) {
     next(err);
   }
@@ -19,19 +16,14 @@ exports.create = async (req, res, next) => {
 exports.findAll = async (req, res, next) => {
   try {
     const { title, location, company, category, jobType, status } = req.query;
-    const filter = {};
-
-    if (title) filter.title = new RegExp(title, "i");
-    if (location) filter.location = new RegExp(location, "i");
-    if (company) filter.company = new RegExp(company, "i");
-    if (category) filter.category = new RegExp(category, "i");
-    if (jobType) filter.jobType = jobType;
-    if (status) filter.status = status;
-
-    const jobs = await Job.find(filter)
-      .populate("employer", "username fullName companyName")
-      .sort({ createdAt: -1 });
-
+    const jobs = await Job.findAll({
+      title,
+      location,
+      company,
+      category,
+      jobType,
+      status,
+    });
     res.json(jobs);
   } catch (err) {
     next(err);
@@ -40,10 +32,7 @@ exports.findAll = async (req, res, next) => {
 
 exports.findOne = async (req, res, next) => {
   try {
-    const job = await Job.findById(req.params.id).populate(
-      "employer",
-      "username fullName companyName email"
-    );
+    const job = await Job.findById(req.params.id, { includeEmployerEmail: true });
     if (!job) {
       return res.status(404).json({ message: "Job not found." });
     }
@@ -55,24 +44,20 @@ exports.findOne = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const job = await Job.findById(req.params.id);
+    const job = await Job.findRawById(req.params.id);
     if (!job) {
       return res.status(404).json({ message: "Job not found." });
     }
 
-    if (job.employer.toString() !== req.userId && req.user.role !== "admin") {
+    if (String(job.employerId) !== String(req.userId) && req.user.role !== "admin") {
       return res.status(403).json({ message: "Not authorized to update this job." });
     }
 
     const updates = { ...req.body };
     delete updates.employer;
+    delete updates.employerId;
 
-    const updated = await Job.findByIdAndUpdate(
-      req.params.id,
-      { $set: updates },
-      { new: true }
-    ).populate("employer", "username fullName companyName");
-
+    const updated = await Job.updateById(req.params.id, updates);
     res.json(updated);
   } catch (err) {
     next(err);
@@ -81,12 +66,12 @@ exports.update = async (req, res, next) => {
 
 exports.delete = async (req, res, next) => {
   try {
-    const job = await Job.findById(req.params.id);
+    const job = await Job.findRawById(req.params.id);
     if (!job) {
       return res.status(404).json({ message: "Job not found." });
     }
 
-    const isOwner = job.employer.toString() === req.userId;
+    const isOwner = String(job.employerId) === String(req.userId);
     const isAdmin = req.user.role === "admin";
     const isModerator = req.user.role === "moderator";
 
@@ -94,8 +79,8 @@ exports.delete = async (req, res, next) => {
       return res.status(403).json({ message: "Not authorized to delete this job." });
     }
 
-    await Application.deleteMany({ job: req.params.id });
-    await Job.findByIdAndDelete(req.params.id);
+    await Application.deleteByJobId(req.params.id);
+    await Job.deleteById(req.params.id);
 
     res.json({ message: "Job deleted successfully." });
   } catch (err) {
@@ -105,10 +90,7 @@ exports.delete = async (req, res, next) => {
 
 exports.findMyJobs = async (req, res, next) => {
   try {
-    const jobs = await Job.find({ employer: req.userId })
-      .populate("employer", "username fullName companyName")
-      .sort({ createdAt: -1 });
-
+    const jobs = await Job.findAll({ employerId: req.userId });
     res.json(jobs);
   } catch (err) {
     next(err);

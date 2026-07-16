@@ -1,7 +1,6 @@
-const db = require("../models");
-const Application = db.Application;
-const Job = db.Job;
-const User = db.User;
+const Application = require("../repositories/application.repository");
+const Job = require("../repositories/job.repository");
+const User = require("../repositories/user.repository");
 const emailService = require("../services/email.service");
 
 exports.create = async (req, res, next) => {
@@ -12,31 +11,23 @@ exports.create = async (req, res, next) => {
       return res.status(400).json({ message: "Job ID is required." });
     }
 
-    const job = await Job.findById(jobId);
+    const job = await Job.findRawById(jobId);
     if (!job) {
       return res.status(404).json({ message: "Job not found." });
     }
 
-    const existing = await Application.findOne({
-      job: jobId,
-      applicant: req.userId,
-    });
+    const existing = await Application.findOneByJobAndApplicant(jobId, req.userId);
     if (existing) {
       return res.status(400).json({ message: "You have already applied to this job." });
     }
 
-    const application = new Application({
-      job: jobId,
-      applicant: req.userId,
+    const application = await Application.create({
+      jobId,
+      applicantId: req.userId,
       coverLetter: coverLetter || "",
     });
 
-    await application.save();
-    const populated = await Application.findById(application._id)
-      .populate("job")
-      .populate("applicant", "username fullName email");
-
-    res.status(201).json(populated);
+    res.status(201).json(application);
   } catch (err) {
     next(err);
   }
@@ -44,24 +35,19 @@ exports.create = async (req, res, next) => {
 
 exports.findAll = async (req, res, next) => {
   try {
-    let filter = {};
+    const filters = {};
 
     if (req.user.role === "job_seeker" || req.user.role === "premium_user") {
-      filter.applicant = req.userId;
+      filters.applicantId = req.userId;
     } else if (req.user.role === "employer") {
-      const myJobs = await Job.find({ employer: req.userId }).select("_id");
-      filter.job = { $in: myJobs.map((j) => j._id) };
+      filters.jobIds = await Job.findIdsByEmployer(req.userId);
     }
-    // admin: no filter, sees all
 
-    const { status } = req.query;
-    if (status) filter.status = status;
+    if (req.query.status) {
+      filters.status = req.query.status;
+    }
 
-    const applications = await Application.find(filter)
-      .populate("job", "title company location status")
-      .populate("applicant", "username fullName email resume")
-      .sort({ createdAt: -1 });
-
+    const applications = await Application.findAll(filters);
     res.json(applications);
   } catch (err) {
     next(err);
@@ -70,17 +56,17 @@ exports.findAll = async (req, res, next) => {
 
 exports.findOne = async (req, res, next) => {
   try {
-    const application = await Application.findById(req.params.id)
-      .populate("job")
-      .populate("applicant", "username fullName email resume phone");
+    const application = await Application.findById(req.params.id);
 
     if (!application) {
       return res.status(404).json({ message: "Application not found." });
     }
 
-    const job = await Job.findById(application.job._id);
-    const isApplicant = application.applicant._id.toString() === req.userId;
-    const isEmployer = job.employer.toString() === req.userId;
+    const jobId = application.job?._id || application.job;
+    const job = await Job.findRawById(jobId);
+    const applicantId = application.applicant?._id || application.applicant;
+    const isApplicant = String(applicantId) === String(req.userId);
+    const isEmployer = job && String(job.employerId) === String(req.userId);
 
     if (!isApplicant && !isEmployer && req.user.role !== "admin") {
       return res.status(403).json({ message: "Access denied." });
@@ -103,13 +89,14 @@ exports.updateStatus = async (req, res, next) => {
       });
     }
 
-    const application = await Application.findById(req.params.id).populate("job");
+    const application = await Application.findById(req.params.id);
     if (!application) {
       return res.status(404).json({ message: "Application not found." });
     }
 
-    const job = await Job.findById(application.job._id);
-    const isEmployer = job.employer.toString() === req.userId;
+    const jobId = application.job?._id || application.job;
+    const job = await Job.findRawById(jobId);
+    const isEmployer = job && String(job.employerId) === String(req.userId);
     const isAdmin = req.user.role === "admin";
     const isModerator = req.user.role === "moderator";
 
@@ -117,21 +104,21 @@ exports.updateStatus = async (req, res, next) => {
       return res.status(403).json({ message: "Not authorized to update this application." });
     }
 
-    application.status = status;
-    await application.save();
+    const populated = await Application.updateStatus(req.params.id, status);
 
-    // Send email notification to applicant (async, non-blocking)
-    const applicant = await User.findById(application.applicant).select("email fullName username");
+    const applicantId = populated.applicant?._id || populated.applicant;
+    const applicant = await User.findById(applicantId);
     if (applicant && applicant.email) {
-      const jobTitle = application.job?.title || job?.title || "Job";
+      const jobTitle = populated.job?.title || job?.title || "Job";
       emailService
-        .sendApplicationStatusEmail(applicant.email, applicant.fullName || applicant.username, jobTitle, status)
+        .sendApplicationStatusEmail(
+          applicant.email,
+          applicant.fullName || applicant.username,
+          jobTitle,
+          status
+        )
         .catch(() => {});
     }
-
-    const populated = await Application.findById(application._id)
-      .populate("job")
-      .populate("applicant", "username fullName email");
 
     res.json(populated);
   } catch (err) {
@@ -141,16 +128,21 @@ exports.updateStatus = async (req, res, next) => {
 
 exports.delete = async (req, res, next) => {
   try {
-    const application = await Application.findById(req.params.id);
+    const application = await Application.findRawById(req.params.id);
     if (!application) {
       return res.status(404).json({ message: "Application not found." });
     }
 
-    if (application.applicant.toString() !== req.userId && req.user.role !== "admin") {
-      return res.status(403).json({ message: "Not authorized to withdraw this application." });
+    if (
+      String(application.applicantId) !== String(req.userId) &&
+      req.user.role !== "admin"
+    ) {
+      return res.status(403).json({
+        message: "Not authorized to withdraw this application.",
+      });
     }
 
-    await Application.findByIdAndDelete(req.params.id);
+    await Application.deleteById(req.params.id);
     res.json({ message: "Application withdrawn successfully." });
   } catch (err) {
     next(err);

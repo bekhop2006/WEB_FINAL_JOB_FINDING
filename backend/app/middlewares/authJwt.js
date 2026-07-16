@@ -1,12 +1,12 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config/auth.config");
-const db = require("../models");
-const User = db.User;
+const User = require("../repositories/user.repository");
 
 const verifyToken = async (req, res, next) => {
   let token =
     req.headers["x-access-token"] ||
-    (req.headers["authorization"] && req.headers["authorization"].replace(/^Bearer\s+/i, "").trim());
+    (req.headers["authorization"] &&
+      req.headers["authorization"].replace(/^Bearer\s+/i, "").trim());
 
   if (!token) {
     return res.status(403).json({ message: "No token provided!" });
@@ -41,14 +41,18 @@ const isEmployer = (req, res, next) => {
 const isEmployerOrModerator = (req, res, next) => {
   const allowed = ["employer", "admin", "moderator"];
   if (!allowed.includes(req.user.role)) {
-    return res.status(403).json({ message: "Require Employer, Moderator, or Admin role!" });
+    return res.status(403).json({
+      message: "Require Employer, Moderator, or Admin role!",
+    });
   }
   next();
 };
 
 const isJobSeeker = (req, res, next) => {
   if (!["job_seeker", "premium_user", "admin"].includes(req.user.role)) {
-    return res.status(403).json({ message: "Require Job Seeker, Premium User, or Admin role!" });
+    return res.status(403).json({
+      message: "Require Job Seeker, Premium User, or Admin role!",
+    });
   }
   next();
 };

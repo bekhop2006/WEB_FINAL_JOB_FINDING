@@ -8,13 +8,13 @@
 **JobFinder API** — A Job Finding Platform
 
 ### Topic
-This project is a **Job Finding API** built using Node.js, Express, and MongoDB. It allows users (job seekers and employers) to register, log in, and manage job listings and applications securely using JWT authentication. The app supports role-based access control (job seeker, employer, admin) and enables employers to post jobs while job seekers can browse, search, and apply for positions.
+This project is a **Job Finding API** built using Node.js, Express, and Supabase (PostgreSQL). It allows users (job seekers and employers) to register, log in, and manage job listings and applications securely using JWT authentication. The app supports role-based access control (job seeker, employer, admin) and enables employers to post jobs while job seekers can browse, search, and apply for positions.
 
 ### Why Did You Choose It?
 - **Real-world relevance**: Job finding platforms are widely used and solve a practical problem.
 - **Full-stack learning**: Covers authentication, CRUD operations, relationships between entities, and role-based access.
 - **Scalable scope**: Can start simple and add features like search, filters, and notifications.
-- **Industry standard**: Uses technologies (Node.js, Express, MongoDB, JWT) commonly used in production applications.
+- **Industry standard**: Uses technologies (Node.js, Express, PostgreSQL/Supabase, JWT) commonly used in production applications.
 
 ### Main Features
 - **User Registration & Login** — Secure authentication with JWT
@@ -193,7 +193,7 @@ job-finder-api/
 |-------|------------|
 | Runtime | Node.js |
 | Framework | Express.js |
-| Database | MongoDB |
+| Database | Supabase (PostgreSQL) |
 | ODM | Mongoose |
 | Auth | JWT (jsonwebtoken) |
 | Password | bcryptjs |
@@ -209,9 +209,9 @@ npx express-generator --no-view job-finder-api
 cd job-finder-api
 
 # Install dependencies
-npm install mongoose bcryptjs jsonwebtoken cors dotenv
+npm install pg bcryptjs jsonwebtoken cors dotenv
 
-# Run (ensure MongoDB is running)
+# Run (ensure DATABASE_URL points to Supabase and schema.sql is applied)
 npm start
 ```
 

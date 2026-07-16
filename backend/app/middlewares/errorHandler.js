@@ -3,25 +3,27 @@
  * Catches errors and returns appropriate HTTP status codes and messages.
  */
 module.exports = (err, req, res, next) => {
-  // Mongoose validation error
-  if (err.name === "ValidationError") {
-    const messages = Object.values(err.errors)
-      .map((e) => e.message)
-      .join("; ");
-    return res.status(400).json({ message: messages });
-  }
-
-  // Mongoose duplicate key (e.g. unique constraint)
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyPattern || {})[0] || "field";
+  // PostgreSQL unique violation
+  if (err.code === "23505") {
+    const detail = err.detail || "";
+    const fieldMatch = detail.match(/\(([^)]+)\)=/);
+    const field = fieldMatch ? fieldMatch[1] : "field";
     return res.status(400).json({
       message: `A record with this ${field} already exists.`,
     });
   }
 
-  // Mongoose CastError (invalid ObjectId)
-  if (err.name === "CastError") {
+  // PostgreSQL invalid UUID / input syntax
+  if (err.code === "22P02") {
     return res.status(400).json({ message: "Invalid ID format." });
+  }
+
+  // PostgreSQL foreign key / check violations
+  if (err.code === "23503") {
+    return res.status(400).json({ message: "Related record not found." });
+  }
+  if (err.code === "23514") {
+    return res.status(400).json({ message: err.message || "Invalid value." });
   }
 
   // JWT errors
@@ -40,6 +42,9 @@ module.exports = (err, req, res, next) => {
   // Default: 500 Internal Server Error
   console.error("Error:", err);
   res.status(500).json({
-    message: process.env.NODE_ENV === "production" ? "Internal server error." : err.message,
+    message:
+      process.env.NODE_ENV === "production"
+        ? "Internal server error."
+        : err.message,
   });
 };

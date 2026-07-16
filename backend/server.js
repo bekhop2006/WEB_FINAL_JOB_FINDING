@@ -3,7 +3,7 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
 const swaggerSpec = require("./app/config/swagger");
-const db = require("./app/models");
+const { testConnection } = require("./app/db/pool");
 
 const authRoutes = require("./app/routes/auth.routes");
 const userRoutes = require("./app/routes/user.routes");
@@ -103,15 +103,14 @@ app.use((req, res, next) => {
 const errorHandler = require("./app/middlewares/errorHandler");
 app.use(errorHandler);
 
-db.mongoose
-  .connect(db.url)
+testConnection()
   .then(() => {
-    console.log("Successfully connected to MongoDB.");
+    console.log("Successfully connected to PostgreSQL (Supabase).");
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}.`);
     });
   })
   .catch((err) => {
-    console.error("Connection error:", err);
+    console.error("Database connection error:", err.message || err);
     process.exit(1);
   });

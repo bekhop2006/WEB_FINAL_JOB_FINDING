@@ -1,6 +1,6 @@
 # JobFinder API (Backend)
 
-A Job Finding API built with Node.js, Express, MongoDB, JWT authentication, and RBAC.
+A Job Finding API built with Node.js, Express, Supabase (PostgreSQL), JWT authentication, and RBAC.
 
 ## Features
 
@@ -16,7 +16,7 @@ A Job Finding API built with Node.js, Express, MongoDB, JWT authentication, and 
 ## Prerequisites
 
 - Node.js 18+
-- MongoDB (local or Atlas)
+- Free [Supabase](https://supabase.com) project (PostgreSQL)
 
 ## Setup
 
@@ -24,8 +24,15 @@ A Job Finding API built with Node.js, Express, MongoDB, JWT authentication, and 
 cd backend
 npm install
 cp .env.example .env
-# Edit .env: MONGODB_URI, JWT_SECRET, SMTP_* (optional)
+# Edit .env: DATABASE_URL, JWT_SECRET, SMTP_* (optional)
 ```
+
+### Supabase
+
+1. Create a free project at [supabase.com](https://supabase.com)
+2. Open **SQL Editor** and run [`app/db/schema.sql`](app/db/schema.sql)
+3. Copy the connection URI from **Project Settings → Database**
+4. Put it in `.env` as `DATABASE_URL`
 
 ## Run
 
@@ -48,7 +55,8 @@ Server runs at `http://localhost:3000`
 | Variable | Required | Description |
 |----------|----------|-------------|
 | PORT | No | Default 3000 |
-| MONGODB_URI | Yes* | MongoDB connection (*or DB_HOST+DB_PORT+DB_NAME) |
+| DATABASE_URL | Yes | Supabase PostgreSQL connection URI |
+| DATABASE_SSL | No | Set `false` only for local Postgres without SSL |
 | JWT_SECRET | Yes | Secret for JWT signing |
 | JWT_EXPIRES_IN | No | Default 24h |
 | CORS_ORIGIN | No | Default * |
@@ -59,7 +67,7 @@ Server runs at `http://localhost:3000`
 ## Tech Stack
 
 - Node.js, Express
-- MongoDB, Mongoose
+- Supabase PostgreSQL (`pg`)
 - JWT (jsonwebtoken), bcryptjs
 - Joi (validation)
 - Nodemailer (email)
