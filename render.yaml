@@ -1,13 +1,11 @@
-# Render — один сервис: backend + frontend
-# Root Directory: оставьте пустым (repo root)
-# Build: собирает frontend и backend
-# Start: запускает backend, который отдаёт API + собранный frontend
+# Render — backend API only
+# Root Directory: backend
 services:
   - type: web
-    name: jobfinder
-    # rootDir: пусто = корень репозитория 
-    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
-    startCommand: cd backend && node server.js
+    name: jobfinder-api
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production

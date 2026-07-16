@@ -85,22 +85,16 @@ Full interactive docs: **http://localhost:3000/swagger/** (or `/api-docs`)
 | /api/applications/:id | GET, DELETE | Get/withdraw application |
 | /api/applications/:id/status | PUT | Update status (employer/moderator) |
 
-## Deployment (Render) — один сервис
-
-Backend отдаёт API и собранный frontend с одного URL.
+## Deployment (Render) — backend API
 
 1. **New** → **Web Service**, подключите репозиторий.
-2. **Root Directory:** оставьте **пустым** (корень репозитория)
-3. **Build Command:** `cd frontend && npm install && npm run build && cd ../backend && npm install`
-4. **Start Command:** `cd backend && node server.js`
+2. **Root Directory:** `backend`
+3. **Build Command:** `npm install`
+4. **Start Command:** `node server.js`
 5. **Environment:** `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` (можно `*` или URL)
 6. Deploy
 
-Готово: по одному URL будут доступны и фронт, и API.
-
-### Альтернатива: два сервиса (Backend + Static Site)
-
-См. предыдущую версию README в git history — Backend как Web Service, Frontend как Static Site с `VITE_API_URL`.
+Frontend запускается отдельно (`cd frontend && npm run dev` или Static Site с `VITE_API_URL`).
 
 ### Railway
 
