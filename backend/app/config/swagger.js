@@ -9,7 +9,13 @@ const options = {
       description: "Job Finding API with JWT Authentication. Use **Authorize** to add Bearer token after login.",
     },
     servers: [
-      { url: "http://localhost:3000", description: "Development server" },
+      {
+        url:
+          process.env.PUBLIC_URL ||
+          process.env.RENDER_EXTERNAL_URL ||
+          `http://localhost:${process.env.PORT || 3000}`,
+        description: "API server",
+      },
     ],
     components: {
       securitySchemes: {
